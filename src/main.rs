@@ -24,12 +24,12 @@ use db::DbExecutor;
 use actix::Actor;
 use r2d2_diesel::{ConnectionManager};
 use r2d2::Pool;
-use futures::Future;
+use futures::{Future, future};
 use dotenv::dotenv;
 use std::env;
 use diesel::pg::PgConnection;
-use actix_web::{http, AsyncResponder,
-    FutureResponse, HttpResponse, Path, State, server, App};
+use actix_web::{http, AsyncResponder, FromRequest, HttpResponse, HttpRequest,
+    server, App, Error, Json};
 
 /// State with DbEx
 struct AppState {
@@ -37,8 +37,10 @@ struct AppState {
 }
 
 /// Async request handler
-fn index((person, state): (Path<CreatePerson>, State<AppState>)) -> FutureResponse<HttpResponse> {
-    state
+fn index(req: &HttpRequest<AppState>) -> Box<Future<Item = HttpResponse, Error = Error>> {
+    let person = Json::<CreatePerson>::extract(req);
+
+    req.state()
         .db
         .send(CreatePerson {
             name: person.name.clone(),
@@ -73,9 +75,9 @@ fn main() {
     
     server::new(move || {
         App::with_state(AppState{db: addr.clone()})
-            .resource("/person", |r| r.method(http::Method::POST).with(index))
+            .resource("/person", |r| r.method(http::Method::POST).a(index))
     })
         .bind(url)
         .unwrap()
-        .run()
+        .run();
 }

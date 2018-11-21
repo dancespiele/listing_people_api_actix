@@ -10,6 +10,7 @@ use uuid;
 use models;
 use schema;
 
+#[derive(Deserialize)]
 pub struct CreatePerson {
     pub name: String,
     pub super_power: bool,
