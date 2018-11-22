@@ -1,9 +1,8 @@
-#![warn(proc_macro_derive_resolution_fallback)]
 use super::schema::people;
 
 #[derive(Serialize, Queryable)]
 pub struct Person {
-    pub id: i32,
+    pub id: String,
     pub name: String,
     pub super_power: bool,
     pub rich: bool,
@@ -14,7 +13,7 @@ pub struct Person {
 #[derive(Insertable)]
 #[table_name = "people"]
 pub struct NewPerson<'a>{
-    pub id: i32,
+    pub id: String,
     pub name: &'a str,
     pub super_power: bool,
     pub rich: bool,

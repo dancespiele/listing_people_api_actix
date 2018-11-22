@@ -37,7 +37,7 @@ impl Handler<CreatePerson> for DbExecutor {
         let uuid = format!("{}", uuid::Uuid::new_v4());
         
         let new_person = models::NewPerson {
-            id: uuid.parse::<i32>().unwrap(),
+            id: uuid.parse::<String>().expect("problem to pass to String from uuid format"),
             name: &msg.name,
             super_power: msg.super_power,
             rich: msg.rich,
@@ -49,10 +49,10 @@ impl Handler<CreatePerson> for DbExecutor {
         diesel::insert_into(people)
             .values(&new_person)
             .execute(conn)
-            .map_err(|_| error::ErrorInternalServerError("Error inserting person"))?;
+            .unwrap();
         
         let mut items = people
-            .filter(id.eq(uuid.parse::<i32>().unwrap()))
+            .filter(id.eq(uuid.parse::<String>().unwrap()))
             .load::<models::Person>(conn)
             .map_err(|_| error::ErrorInternalServerError("Error loading person"))?;
 
