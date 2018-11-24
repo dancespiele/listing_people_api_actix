@@ -6,20 +6,17 @@ use diesel;
 use diesel::prelude::*;
 use db::DbExecutor;
 use uuid;
-
+use enpoints::people::structs::{CreatePerson, GetPerson};
 use models;
 use schema;
 
-#[derive(Deserialize)]
-pub struct CreatePerson {
-    pub name: String,
-    pub super_power: bool,
-    pub rich: bool,
-    pub genius: bool
+/// Message to create person
+impl Message for CreatePerson {
+    type Result = Result<models::Person, Error>;
 }
 
-/// Message for every person to crate
-impl Message for CreatePerson {
+/// Message to getPerson
+impl Message for GetPerson {
     type Result = Result<models::Person, Error>;
 }
 
@@ -28,6 +25,7 @@ impl Actor for DbExecutor {
     type Context = SyncContext<Self>;
 }
 
+///save the person in the database
 impl Handler<CreatePerson> for DbExecutor {
     type Result = Result<models::Person, Error>;
 
@@ -54,9 +52,27 @@ impl Handler<CreatePerson> for DbExecutor {
         let mut items = people
             .filter(id.eq(uuid.parse::<String>().unwrap()))
             .load::<models::Person>(conn)
-            .map_err(|_| error::ErrorInternalServerError("Error loading person"))?;
+            .expect("Error loading person");
 
         Ok(items.pop().unwrap())
     }
 }
 
+impl Handler<GetPerson> for DbExecutor {
+    type Result = Result<models::Person, Error>;
+
+    fn handle(&mut self, msg: GetPerson, _: &mut Self::Context) -> Self::Result {
+        use self::schema::people::dsl::*;
+
+        let person_name = &msg.name;
+
+        let conn: &PgConnection = &self.0.get().expect("Error to connect to database");
+
+        let mut items = people
+            .filter(name.eq(person_name))
+            .load::<models::Person>(conn)
+            .expect("Person is not in the database");
+        
+        Ok(items.pop().unwrap())
+    }
+}

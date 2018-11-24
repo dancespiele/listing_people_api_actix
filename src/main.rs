@@ -21,7 +21,7 @@ pub mod schema;
 pub mod enpoints;
 
 use actix::prelude::*;
-use enpoints::people::routes::insert_person;
+use enpoints::people::routes::{insert_person, get_person};
 use db::{DbExecutor, AppState};
 
 use r2d2_diesel::{ConnectionManager};
@@ -57,7 +57,9 @@ fn main() {
     server::new(move || {
         App::with_state(AppState{db: addr.clone()})
             .middleware(middleware::Logger::default())
-            .resource("/person", |r| r.method(http::Method::POST).with(insert_person))})
+            .resource("/person/{name}", |r| r.method(http::Method::POST).with(insert_person))
+            .resource("/person/{name}", |r| r.method(http::Method::GET).with(get_person))})
+
         .workers(4)
         .bind(url)
         .unwrap()
