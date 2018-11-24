@@ -57,8 +57,8 @@ fn main() {
     server::new(move || {
         App::with_state(AppState{db: addr.clone()})
             .middleware(middleware::Logger::default())
-            .resource("/person", |r| r.method(http::Method::POST).with(insert_person))
-            .resource("/person/{name}", |r| r.method(http::Method::GET).with(get_person))})
+            .resource("/person", |r| r.method(http::Method::POST).with_async(insert_person))
+            .resource("/person/{name}", |r| r.method(http::Method::GET).with_async(get_person))})
 
         .workers(4)
         .bind(url)
