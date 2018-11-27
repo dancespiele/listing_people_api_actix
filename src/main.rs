@@ -9,20 +9,25 @@ extern crate serde_json;
 extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate failure;
 extern crate r2d2;
 extern crate r2d2_diesel;
 extern crate uuid;
 extern crate futures;
 extern crate dotenv;
+extern crate listenfd;
 
-pub mod db;
-pub mod models;
-pub mod schema;
-pub mod enpoints;
+mod db;
+mod models;
+mod schema;
+mod enpoints;
+mod error;
 
+use listenfd::ListenFd;
 use actix::prelude::*;
-use enpoints::people::routes::{insert_person, get_person};
-use db::{DbExecutor, AppState};
+use enpoints::routes::routes;
+use db::{DbExecutor};
 
 use r2d2_diesel::{ConnectionManager};
 use r2d2::Pool;
@@ -30,10 +35,12 @@ use r2d2::Pool;
 use dotenv::dotenv;
 use std::env;
 use diesel::pg::PgConnection;
-use actix_web::{http,server, App, middleware};
+use actix_web::{server};
 
 fn main() {
     dotenv().ok();
+
+    let mut listenfd = ListenFd::from_env();
 
     ::std::env::set_var("RUST_LOG", "actix_web=debug");
     env_logger::init();
@@ -54,16 +61,16 @@ fn main() {
 
     let addr = SyncArbiter::start(3, move|| DbExecutor(pool.clone()));
     
-    server::new(move || {
-        App::with_state(AppState{db: addr.clone()})
-            .middleware(middleware::Logger::default())
-            .resource("/person", |r| r.method(http::Method::POST).with_async(insert_person))
-            .resource("/person/{name}", |r| r.method(http::Method::GET).with_async(get_person))})
+    let mut server = server::new(move || routes(addr.clone()))
+        .workers(4);
 
-        .workers(4)
-        .bind(url)
-        .unwrap()
-        .start();
+    server = if let Some(l) = listenfd.take_tcp_listener(0).unwrap() {
+        server.listen(l)
+    } else {
+        server.bind(url).unwrap()
+    };
+
+    server.start();
     
     let _= sys.run();
 }

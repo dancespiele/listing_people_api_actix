@@ -1,3 +1,3 @@
-pub mod model;
-pub mod routes;
+pub mod handlers;
+pub mod messages;
 pub mod structs;
