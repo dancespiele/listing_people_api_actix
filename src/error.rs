@@ -5,9 +5,6 @@ pub enum ServiceError {
     #[fail(display = "Internal Server Error: {}", _0)]
     InternalServerError(String),
 
-    #[fail(display = "BadRequest: {}", _0)]
-    BadRequest(String),
-
     #[fail(display = "NotFound: {}", _0)]
     NotFound(String),
 }
@@ -19,7 +16,6 @@ impl ResponseError for ServiceError {
             ServiceError::InternalServerError(ref message) => {
                 HttpResponse::InternalServerError().json(message)
             },
-            ServiceError::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
             ServiceError::NotFound(ref message) => HttpResponse::NotFound().json(message),
         }
     }
