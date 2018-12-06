@@ -9,7 +9,7 @@ pub struct SendMessage;
 ///Struct to send messages to handler request
 impl SendMessage {
     /// Receive json from argument and send to handler
-    pub fn send_create((person, state): (Json<CreatePerson>, State<AppState>))
+    pub fn send_create(person: Json<CreatePerson>, state: State<AppState>)
         -> FutureResponse<HttpResponse> {
         state
             .db
