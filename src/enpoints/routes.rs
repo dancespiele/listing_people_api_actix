@@ -12,8 +12,9 @@ pub fn routes(db: Addr<DbExecutor>) -> App<AppState> {
                 .with_async_config(SendMessage::send_create, |cfg| {
                     cfg.0.limit(4096)
                         .error_handler(|err, _req| {
+                            let description = format!("{}", err);
                             error::InternalError::from_response(
-                                err, HttpResponse::Conflict().finish()).into()
+                                err, HttpResponse::BadRequest().json(description)).into()
                         });
                 });
             r.method(Method::GET).with_async(SendMessage::send_get_all);
