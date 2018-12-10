@@ -1,4 +1,5 @@
-use listing_people_api_actix;
+extern crate actix_web;
+use listing_people_api_actix::enpoints;
 use actix_web::{HttpRequest, HttpResponse, test::TestServer};
 use enpoints::people::messages::{SendMessage};
 
