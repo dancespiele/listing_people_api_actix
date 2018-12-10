@@ -2,11 +2,13 @@ use actix::prelude::*;
 use actix_web::{http::Method, App, middleware, error, HttpResponse};
 use db::{DbExecutor, AppState};
 use enpoints::people::messages::SendMessage;
+use middlewares::logger::LocalLogger;
 
 /// return all the resources and middlewares of the api
 pub fn routes(db: Addr<DbExecutor>) -> App<AppState> {
     App::with_state(AppState{ db })
         .middleware(middleware::Logger::default())
+        .middleware(LocalLogger)
         .resource("/person", |r| {
             r.method(Method::POST)
                 .with_async_config(SendMessage::send_create, |cfg| {

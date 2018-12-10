@@ -43,6 +43,8 @@ impl Handler<CreatePerson> for DbExecutor {
         use self::schema::people::dsl::*;
 
         let uuid = format!("{}", uuid::Uuid::new_v4());
+
+        println!("Body: {:#?}", &msg);
         
         let new_person = models::NewPerson {
             id: uuid.parse::<String>().expect("problem to pass to String from uuid format"),

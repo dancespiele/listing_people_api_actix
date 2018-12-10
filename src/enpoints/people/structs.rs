@@ -1,5 +1,5 @@
 ///Struct to insert people
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct CreatePerson {
     pub name: String,
     pub super_power: bool,

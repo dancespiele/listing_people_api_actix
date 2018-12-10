@@ -17,12 +17,15 @@ extern crate uuid;
 extern crate futures;
 extern crate dotenv;
 extern crate listenfd;
+extern crate http;
 
 mod db;
 mod models;
 mod schema;
 mod enpoints;
 mod error;
+mod middlewares;
+
 
 use listenfd::ListenFd;
 use actix::prelude::*;
