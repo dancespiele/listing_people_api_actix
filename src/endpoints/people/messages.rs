@@ -1,6 +1,6 @@
 use actix_web::{AsyncResponder, HttpResponse, State,
     FutureResponse, Json, Path, ResponseError};
-use enpoints::people::structs::{CreatePerson, GetPerson, AllPeople, DeletePerson};
+use endpoints::people::structs::{CreatePerson, GetPerson, AllPeople, DeletePerson};
 use db::AppState;
 use futures::Future;
 

@@ -1,7 +1,7 @@
 use actix::prelude::*;
 use actix_web::{http::Method, App, middleware, error, HttpResponse};
 use db::{DbExecutor, AppState};
-use enpoints::people::messages::SendMessage;
+use endpoints::people::messages::SendMessage;
 use middlewares::logger::LocalLogger;
 
 /// return all the resources and middlewares of the api

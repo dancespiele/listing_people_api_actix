@@ -22,14 +22,14 @@ extern crate http;
 mod db;
 mod models;
 mod schema;
-mod enpoints;
+mod endpoints;
 mod error;
 mod middlewares;
 
 
 use listenfd::ListenFd;
 use actix::prelude::*;
-use enpoints::routes::routes;
+use endpoints::routes::routes;
 use db::{DbExecutor};
 
 use r2d2_diesel::{ConnectionManager};

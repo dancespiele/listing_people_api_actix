@@ -5,7 +5,7 @@ use diesel;
 use diesel::prelude::*;
 use db::DbExecutor;
 use uuid;
-use enpoints::people::structs::{CreatePerson, GetPerson, AllPeople, DeletePerson};
+use endpoints::people::structs::{CreatePerson, GetPerson, AllPeople, DeletePerson};
 use models;
 use schema;
 use error::ServiceError;
