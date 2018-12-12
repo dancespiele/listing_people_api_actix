@@ -1,6 +1,6 @@
 use actix_web::{AsyncResponder, HttpResponse, State,
     FutureResponse, Json, Path, ResponseError};
-use endpoints::people::structs::{CreatePerson, GetPerson, AllPeople, DeletePerson};
+use endpoints::people::structs::{GetPerson, AllPeople, DeletePerson, People};
 use db::AppState;
 use futures::Future;
 
@@ -9,14 +9,14 @@ pub struct SendMessage;
 ///Struct to send messages to handler request
 impl SendMessage {
     /// Receive json from argument and send to handler
-    pub fn send_create(person: Json<CreatePerson>, state: State<AppState>)
+    pub fn send_create(people: Json<People>, state: State<AppState>)
         -> FutureResponse<HttpResponse> {
         state
             .db
-            .send(person.into_inner())
+            .send(people.into_inner())
             .from_err()
             .and_then(|res| match res {
-                Ok(person) => Ok(HttpResponse::Ok().json(person)),
+                Ok(new_people) => Ok(HttpResponse::Ok().json(new_people)),
                 Err(error) => Ok(error.error_response()),
             })
             .responder()

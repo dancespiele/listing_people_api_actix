@@ -4,7 +4,12 @@ pub struct CreatePerson {
     pub name: String,
     pub super_power: bool,
     pub rich: bool,
-    pub genius: bool
+    pub genius: bool,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct People{ 
+    pub list: Vec<CreatePerson>
 }
 
 ///Struct to find person

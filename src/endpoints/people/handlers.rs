@@ -5,14 +5,14 @@ use diesel;
 use diesel::prelude::*;
 use db::DbExecutor;
 use uuid;
-use endpoints::people::structs::{CreatePerson, GetPerson, AllPeople, DeletePerson};
+use endpoints::people::structs::{GetPerson, AllPeople, DeletePerson, People};
 use models;
 use schema;
 use error::ServiceError;
 
 /// Message to create person
-impl Message for CreatePerson {
-    type Result = Result<models::Person, ServiceError>;
+impl Message for People {
+    type Result = Result<Vec<models::Person>, ServiceError>;
 }
 
 /// Message to getPerson
@@ -36,37 +36,36 @@ impl Actor for DbExecutor {
 }
 
 ///save the person in the database
-impl Handler<CreatePerson> for DbExecutor {
-    type Result = Result<models::Person, ServiceError>;
+impl Handler<People> for DbExecutor {
+    type Result = Result<Vec<models::Person>, ServiceError>;
 
-    fn handle(&mut self, msg: CreatePerson, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, messages: People, _: &mut Self::Context) -> Self::Result {
         use self::schema::people::dsl::*;
 
-        let uuid = format!("{}", uuid::Uuid::new_v4());
-
-        println!("Body: {:#?}", &msg);
+        println!("Body: {:#?}", messages);
         
-        let new_person = models::NewPerson {
-            id: uuid.parse::<String>().expect("problem to pass to String from uuid format"),
-            name: &msg.name,
-            super_power: msg.super_power,
-            rich: msg.rich,
-            genius: msg.genius,
-        };
-
         let conn: &PgConnection = &self.0.get().unwrap();
 
-        diesel::insert_into(people)
-            .values(&new_person)
-            .execute(conn)
-            .map_err(|error| ServiceError::InternalServerError(format!("{:#?}", error)))?;
+        let new_people = messages.list.iter()
+            .map(|msg| {
+                let uuid = format!("{}", uuid::Uuid::new_v4());
+                models::NewPerson {
+                    id: uuid.parse::<String>().expect("problem to pass to String from uuid format"),
+                    name: &msg.name,
+                    super_power: msg.super_power,
+                    rich: msg.rich,
+                    genius: msg.genius,
+                }
+            }).collect::<Vec<_>>(); 
         
-        let mut items = people
-            .filter(id.eq(uuid.parse::<String>().unwrap()))
-            .load::<models::Person>(conn)
-            .map_err(|error| ServiceError::InternalServerError(format!("{:#?}", error)))?;
+        let items = diesel::insert_into(people)
+                .values(new_people)
+                .get_results(conn)
+                .map_err(|error| ServiceError::InternalServerError(format!("{:#?}", error)))?;
 
-        Ok(items.pop().unwrap())
+        println!("Response: {:#?}", items);
+
+        Ok(items)
     }
 }
 
@@ -81,7 +80,7 @@ impl Handler<GetPerson> for DbExecutor {
 
         let conn: &PgConnection = &self.0.get().expect("Error to connect to database");
 
-        match people
+        let item = match people
             .filter(name.eq(person_name))
             .load::<models::Person>(conn) {
                 Ok(items) => {
@@ -92,7 +91,11 @@ impl Handler<GetPerson> for DbExecutor {
                     }
                 },
                 Err(error) => Err(ServiceError::InternalServerError(format!("{:#?}", error)))
-            }
+        };
+
+        println!("Response: {:#?}", item);
+
+        item
     }
 }
 
@@ -110,6 +113,8 @@ impl Handler<AllPeople> for DbExecutor {
             .load::<models::Person>(conn)
             .map_err(|error| ServiceError::InternalServerError(format!("{:#?}", error)))?;
 
+        println!("Response: {:#?}", items);
+
         Ok(items)
     }
 }
@@ -125,7 +130,7 @@ impl Handler<DeletePerson> for DbExecutor {
 
         let conn: &PgConnection = &self.0.get().expect("Error to connect to database");
 
-        match diesel::delete(people
+        let item = match diesel::delete(people
             .filter(name.eq(person_name)))
             .execute(conn) {
                 Ok(items) => {
@@ -136,6 +141,10 @@ impl Handler<DeletePerson> for DbExecutor {
                     }
                 },
                 Err(error) => Err(ServiceError::InternalServerError(format!("{:#?}", error)))
-            }
+        };
+
+        println!("Response: {:#?}", item);
+
+        item
     }
 }

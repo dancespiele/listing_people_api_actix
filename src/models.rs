@@ -1,6 +1,6 @@
 use super::schema::people;
 
-#[derive(Serialize, Queryable)]
+#[derive(Serialize, Queryable, Debug)]
 pub struct Person {
     pub id: String,
     pub name: String,

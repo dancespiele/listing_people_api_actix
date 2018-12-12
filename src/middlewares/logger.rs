@@ -1,5 +1,5 @@
-use actix_web::{HttpRequest, HttpResponse, Result,
-    middleware::{Middleware, Started, Response}};
+use actix_web::{HttpRequest, Result,
+    middleware::{Middleware, Started}};
 
 pub struct LocalLogger;
 
@@ -10,13 +10,5 @@ impl<S> Middleware<S> for LocalLogger {
         println!("Request: {:#?}", req.request());
         println!("Query parameters: {:#?}", req.query());
         Ok(Started::Done)
-    }
-    
-    ///log all the response from the server
-    fn response(&self, _req: &HttpRequest<S>, resp: HttpResponse)
-        -> Result<Response>
-    {
-        println!("{:#?}", resp.body());
-        Ok(Response::Done(resp))
     }
 }
