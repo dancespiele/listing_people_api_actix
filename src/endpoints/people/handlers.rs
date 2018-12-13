@@ -17,7 +17,7 @@ impl Message for People {
 
 /// Message to getPerson
 impl Message for GetPerson {
-    type Result = Result<Vec<models::Person>, ServiceError>;
+    type Result = Result<models::Person, ServiceError>;
 }
 
 /// Message to get all people
@@ -71,7 +71,7 @@ impl Handler<People> for DbExecutor {
 
 ///Get one person
 impl Handler<GetPerson> for DbExecutor {
-    type Result = Result<Vec<models::Person>, ServiceError>;
+    type Result = Result<models::Person, ServiceError>;
 
     fn handle(&mut self, msg: GetPerson, _: &mut Self::Context) -> Self::Result {
         use self::schema::people::dsl::*;
@@ -80,22 +80,20 @@ impl Handler<GetPerson> for DbExecutor {
 
         let conn: &PgConnection = &self.0.get().expect("Error to connect to database");
 
-        let item = match people
+        let item = people
             .filter(name.eq(person_name))
-            .load::<models::Person>(conn) {
-                Ok(items) => {
-                    if !items.is_empty() {
-                        Ok(items)
-                    } else {
-                        Err(ServiceError::NotFound(format!("{} not found in database", person_name)))
-                    }
-                },
-                Err(error) => Err(ServiceError::InternalServerError(format!("{:#?}", error)))
-        };
+            .first::<models::Person>(conn)
+            .map_err(|error| {
+                if error.to_string() == "NotFound" {
+                    ServiceError::NotFound(format!("The person {} doesn't exist in the database", person_name))
+                } else {
+                    ServiceError::InternalServerError(format!("{:#?}", error))
+                }
+            })?;
 
         println!("Response: {:#?}", item);
 
-        item
+        Ok(item)
     }
 }
 

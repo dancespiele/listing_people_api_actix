@@ -9,7 +9,7 @@ pub fn routes(db: Addr<DbExecutor>) -> App<AppState> {
     App::with_state(AppState{ db })
         .middleware(middleware::Logger::default())
         .middleware(LocalLogger)
-        .resource("/person", |r| {
+        .resource("/people", |r| {
             r.method(Method::POST)
                 .with_async_config(SendMessage::send_create, |cfg| {
                     cfg.0.limit(4096)
