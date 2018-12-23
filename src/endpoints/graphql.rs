@@ -21,6 +21,9 @@ impl juniper::Context for Context {}
 pub struct QueryRoot;
 
 graphql_object!(QueryRoot: Context |&self| {
+    description: "Queries people"
+
+    /// Find a person with the name given
     field find_person(&executor, person_name: String) -> FieldResult<Person> {
         use schema::people::dsl::*;
 
@@ -40,6 +43,7 @@ graphql_object!(QueryRoot: Context |&self| {
         Ok(item)
     }
 
+    /// Show all the people saved in the database
     field people(&executor) -> FieldResult<Vec<Person>> {
         use schema::people::dsl::*;
 
@@ -57,6 +61,9 @@ graphql_object!(QueryRoot: Context |&self| {
 pub struct MutationRoot;
 
 graphql_object!(MutationRoot: Context |&self| {
+    description: "Mutations people"
+
+    /// create a person with his or her skills
     field create_person(&executor, new_person: NewPersonGraph) -> FieldResult<Vec<Person>> {
         use schema::people::dsl::*;
 
@@ -79,6 +86,7 @@ graphql_object!(MutationRoot: Context |&self| {
         Ok(item)
     }
 
+    /// Delete a person
     field delete_person(&executor, person_name: String) -> FieldResult<String> {
         use schema::people::dsl::*;
 
@@ -100,6 +108,7 @@ graphql_object!(MutationRoot: Context |&self| {
         item
     }
 
+    /// Update the skills of the person
     field update_person(&executor, person: NewPersonGraph) -> FieldResult<Person> {
         use schema::people::dsl::*;
 

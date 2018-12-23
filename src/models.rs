@@ -1,7 +1,6 @@
 use super::schema::people;
 
 #[derive(Serialize, Queryable, Debug, GraphQLObject)]
-#[graphql(description="The person and his or her skills")]
 pub struct Person {
     pub id: String,
     #[graphql(description="Name of the person")]
@@ -23,7 +22,7 @@ pub struct NewPerson{
 }
 
 #[derive(GraphQLInputObject)]
-#[graphql(description="Create a new person with his o her skills")]
+#[graphql(description="New person object")]
 pub struct NewPersonGraph{
     pub name: String,
     pub super_power: bool,
