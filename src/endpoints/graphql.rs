@@ -4,6 +4,7 @@ use db::Conn;
 use error::ServiceError;
 use models::{Person, NewPerson};
 use uuid;
+use schema;
 
 pub struct Context {
     pub connection: Conn,
@@ -20,13 +21,26 @@ impl juniper::Context for Context {}
 pub struct QueryRoot;
 
 graphql_object!(QueryRoot: Context |&self| {
-    field people(&executor, name: String) -> FieldResult<Vec<Person>> {
+    field find_person(&executor, person_name: String) -> FieldResult<Vec<Person>> {
         use schema::people::dsl::*;
 
         let conn: &PgConnection = &executor.context().connection;
 
         let items = people
-            .filter(name.eq(name))
+            .filter(name.eq(person_name))
+            .load::<Person>(conn)
+            .map_err(|error| ServiceError::InternalServerError(format!("{:#?}", error)))?;
+        
+        Ok(items)
+    }
+
+    field people(&executor) -> FieldResult<Vec<Person>> {
+        use schema::people::dsl::*;
+
+        let conn: &PgConnection = &executor.context().connection;
+
+        let items = people
+            .order(schema::people::name.asc())
             .load::<Person>(conn)
             .map_err(|error| ServiceError::InternalServerError(format!("{:#?}", error)))?;
         

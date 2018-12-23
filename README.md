@@ -10,6 +10,7 @@ Example of application of listing people
 ```
 DATABASE_URL=postgres://[YOUR USER]:[YOUR PASSWORD]@localhost/[YOUR DATABASE]
 URL=localhost:8000
+GRAPHQL_URL=localhost:8088
 ```
 
 * install diesel client 
