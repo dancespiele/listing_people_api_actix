@@ -1,8 +1,9 @@
-use actix_web::{AsyncResponder, HttpResponse, State,
+use actix_web::{AsyncResponder, HttpResponse, HttpRequest, Error, State,
     FutureResponse, Json, Path, ResponseError};
-use endpoints::people::structs::{GetPerson, AllPeople, DeletePerson, People};
-use db::AppState;
+use endpoints::people::structs::{GetPerson, AllPeople, DeletePerson, People, GraphQLData};
+use db::{AppState, GraphQLState};
 use futures::Future;
+use juniper::http::graphiql::graphiql_source;
 
 pub struct SendMessage;
 
@@ -62,4 +63,28 @@ impl SendMessage {
             })
             .responder()
     }
+
+    /// start graphql
+    pub fn graphiql(_req: &HttpRequest<GraphQLState>) -> Result<HttpResponse, Error> {
+        let html = graphiql_source("http://127.0.0.1:8088/graphql");
+        Ok(HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(html))
+    }
+
+    /// send message to graphql
+    pub fn graphql(state: State<GraphQLState>, data: Json<GraphQLData>) 
+        -> FutureResponse<HttpResponse> {
+            state
+                .executor
+                .send(data.0)
+                .from_err()
+                .and_then(|res| match res {
+                    Ok(people) => Ok(HttpResponse::Ok()
+                        .content_type("application/json")
+                        .body(people)),
+                    Err(_) => Ok(HttpResponse::InternalServerError().into()),
+                })
+                .responder()
+        } 
 }

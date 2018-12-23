@@ -1,5 +1,5 @@
 table! {
-    people (id) {
+    people (name) {
         id -> Varchar,
         name -> Varchar,
         super_power -> Bool,

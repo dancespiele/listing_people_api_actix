@@ -3,12 +3,13 @@ use actix_web::*;
 use actix::prelude::*;
 use diesel;
 use diesel::prelude::*;
-use db::DbExecutor;
+use db::{DbExecutor, GraphQLExecutor, Conn};
 use uuid;
-use endpoints::people::structs::{GetPerson, AllPeople, DeletePerson, People};
+use endpoints::people::structs::{GetPerson, AllPeople, DeletePerson, People, GraphQLData};
 use models;
 use schema;
 use error::ServiceError;
+use endpoints::graphql::Context;
 
 /// Message to create person
 impl Message for People {
@@ -30,6 +31,10 @@ impl Message for DeletePerson {
     type Result = Result<String, ServiceError>;
 }
 
+impl Message for GraphQLData {
+    type Result = Result<String, Error>;
+}
+
 /// Implement Actor
 impl Actor for DbExecutor {
     type Context = SyncContext<Self>;
@@ -49,9 +54,11 @@ impl Handler<People> for DbExecutor {
         let new_people = messages.list.iter()
             .map(|msg| {
                 let uuid = format!("{}", uuid::Uuid::new_v4());
+                let name_person = &msg.name;
+
                 models::NewPerson {
                     id: uuid.parse::<String>().expect("problem to pass to String from uuid format"),
-                    name: &msg.name,
+                    name: name_person.to_string(),
                     super_power: msg.super_power,
                     rich: msg.rich,
                     genius: msg.genius,
@@ -144,5 +151,17 @@ impl Handler<DeletePerson> for DbExecutor {
         println!("Response: {:#?}", item);
 
         item
+    }
+}
+
+impl Handler<GraphQLData> for GraphQLExecutor {
+    type Result = Result<String, Error>;
+
+    fn handle(&mut self, msg: GraphQLData, _: &mut Self::Context) -> Self::Result {
+        let conn = self.pool.get().unwrap();
+        let context = Context::new(Conn(conn));
+        let res = msg.0.execute(&self.schema, &context);
+        let res_test = serde_json::to_string(&res)?;
+        Ok(res_test)
     }
 }

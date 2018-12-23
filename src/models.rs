@@ -1,6 +1,6 @@
 use super::schema::people;
 
-#[derive(Serialize, Queryable, Debug)]
+#[derive(Serialize, Queryable, Debug, GraphQLObject)]
 pub struct Person {
     pub id: String,
     pub name: String,
@@ -10,11 +10,11 @@ pub struct Person {
 }
 
 
-#[derive(Insertable)]
+#[derive(Insertable, GraphQLInputObject)]
 #[table_name = "people"]
-pub struct NewPerson<'a>{
+pub struct NewPerson{
     pub id: String,
-    pub name: &'a str,
+    pub name: String,
     pub super_power: bool,
     pub rich: bool,
     pub genius: bool,

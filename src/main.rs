@@ -6,6 +6,8 @@ extern crate env_logger;
 extern crate serde;
 extern crate serde_json;
 #[macro_use]
+extern crate juniper;
+#[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
@@ -26,10 +28,9 @@ mod endpoints;
 mod error;
 mod middlewares;
 
-
 use listenfd::ListenFd;
 use actix::prelude::*;
-use endpoints::routes::routes;
+use endpoints::routes::{routes_db, routes_graphql};
 use db::{DbExecutor};
 
 use r2d2_diesel::{ConnectionManager};
@@ -52,6 +53,9 @@ fn main() {
 
     let url = env::var("URL")
         .expect("URL must be set");
+
+    let graphql_url = env::var("GRAPHQL_URL")
+        .expect("GRAPHQL_URL must be set");
     
     let database_url = env::var("DATABASE_URL")
         .expect("DATABASE URL must be set");
@@ -64,7 +68,7 @@ fn main() {
 
     let addr = SyncArbiter::start(3, move|| DbExecutor(pool.clone()));
     
-    let mut server = server::new(move || routes(addr.clone()))
+    let mut server = server::new(move || routes_db(addr.clone()))
         .workers(4);
 
     server = if let Some(l) = listenfd.take_tcp_listener(0).unwrap() {
@@ -74,6 +78,16 @@ fn main() {
     };
 
     server.start();
+
+    let mut graphql_server = server::new(move || routes_graphql(database_url.clone()));
+
+    graphql_server = if let Some(l) = listenfd.take_tcp_listener(0).unwrap() {
+        graphql_server.listen(l)
+    } else {
+        graphql_server.bind(graphql_url).unwrap()
+    };
+
+    graphql_server.start();
     
     let _= sys.run();
 }

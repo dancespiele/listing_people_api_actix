@@ -1,3 +1,5 @@
+use juniper::http::GraphQLRequest;
+
 ///Struct to insert people
 #[derive(Deserialize, Debug)]
 pub struct CreatePerson {
@@ -26,3 +28,7 @@ pub struct AllPeople;
 pub struct DeletePerson {
     pub name: String,
 }
+
+///Struct for GraphQlData
+#[derive(Serialize, Deserialize)]
+pub struct GraphQLData(pub GraphQLRequest);
