@@ -12,11 +12,19 @@ pub struct Person {
 }
 
 
-#[derive(Insertable, GraphQLInputObject)]
+#[derive(Insertable)]
 #[table_name = "people"]
-#[graphql(description="Create a new person with his o her skills")]
 pub struct NewPerson{
     pub id: String,
+    pub name: String,
+    pub super_power: bool,
+    pub rich: bool,
+    pub genius: bool,
+}
+
+#[derive(GraphQLInputObject)]
+#[graphql(description="Create a new person with his o her skills")]
+pub struct NewPersonGraph{
     pub name: String,
     pub super_power: bool,
     pub rich: bool,

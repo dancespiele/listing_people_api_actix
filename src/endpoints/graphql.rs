@@ -2,7 +2,7 @@ use juniper::{FieldResult, RootNode};
 use diesel::prelude::*;
 use db::Conn;
 use error::ServiceError;
-use models::{Person, NewPerson};
+use models::{Person, NewPersonGraph, NewPerson};
 use uuid;
 use schema;
 
@@ -21,17 +21,23 @@ impl juniper::Context for Context {}
 pub struct QueryRoot;
 
 graphql_object!(QueryRoot: Context |&self| {
-    field find_person(&executor, person_name: String) -> FieldResult<Vec<Person>> {
+    field find_person(&executor, person_name: String) -> FieldResult<Person> {
         use schema::people::dsl::*;
 
         let conn: &PgConnection = &executor.context().connection;
 
-        let items = people
-            .filter(name.eq(person_name))
-            .load::<Person>(conn)
-            .map_err(|error| ServiceError::InternalServerError(format!("{:#?}", error)))?;
-        
-        Ok(items)
+        let item = people
+            .filter(name.eq(&person_name))
+            .first::<Person>(conn)
+            .map_err(|error| {
+                if error.to_string() == "NotFound" {
+                    ServiceError::NotFound(format!("The person {} doesn't exist in the database", &person_name))
+                } else {
+                    ServiceError::InternalServerError(format!("{:#?}", error))
+                }
+            })?;
+
+        Ok(item)
     }
 
     field people(&executor) -> FieldResult<Vec<Person>> {
@@ -51,7 +57,7 @@ graphql_object!(QueryRoot: Context |&self| {
 pub struct MutationRoot;
 
 graphql_object!(MutationRoot: Context |&self| {
-    field createPerson(&executor, new_person: NewPerson) -> FieldResult<Vec<Person>> {
+    field create_person(&executor, new_person: NewPersonGraph) -> FieldResult<Vec<Person>> {
         use schema::people::dsl::*;
 
         let conn: &PgConnection = &executor.context().connection;
@@ -71,6 +77,42 @@ graphql_object!(MutationRoot: Context |&self| {
             .map_err(|error| ServiceError::InternalServerError(format!("{:#?}", error)))?;
 
         Ok(item)
+    }
+
+    field delete_person(&executor, person_name: String) -> FieldResult<String> {
+        use schema::people::dsl::*;
+
+        let conn: &PgConnection = &executor.context().connection;
+
+        let item = match diesel::delete(people
+            .filter(name.eq(&person_name)))
+            .execute(conn) {
+                Ok(items) => {
+                    if items > 0 {
+                        Ok(format!("{} was deleted successfully from the database", &person_name))
+                    } else {
+                        Err(ServiceError::NotFound(format!("{} not found in database", &person_name)))?
+                    }
+                },
+                Err(error) => Err(ServiceError::InternalServerError(format!("{:#?}", error)))?
+        };
+
+        item
+    }
+
+    field update_person(&executor, person: NewPersonGraph) -> FieldResult<Person> {
+        use schema::people::dsl::*;
+
+        let conn: &PgConnection = &executor.context().connection;
+
+        let new_item = match diesel::update(people.filter(name.eq(person.name)))
+            .set((rich.eq(person.rich), genius.eq(person.genius), super_power.eq(person.super_power)))
+            .get_result(conn) {
+                Ok(item) => item,
+                Err(error) => Err(ServiceError::InternalServerError(format!("{:#?}", error)))?
+            };
+
+        Ok(new_item)
     }
 });
 
