@@ -25,7 +25,7 @@ GRAPHQL_URL=localhost:8088
 * write in the file up.sql generated inside of the folde migrations/diesel_initial_setup
 
 ```sql
-CREATE TABLE create_person (
+CREATE TABLE people (
   id VARCHAR(36) PRIMARY KEY NOT NULL,
   name VARCHAR(250) NOT NULL,
   super_power BOOLEAN NOT NULL DEFAULT FALSE,
